@@ -32,12 +32,19 @@ export function tokenize(input: string): Token[] {
 
     if (isDigit(char)) {
       let number = "";
-      while (cursor < input.length && isDigit(input[cursor])) {
+      while (cursor < input.length && (isDigit(input[cursor]) || input[cursor] === '.')) {
         number += input[cursor++];
       }
+      
+      // Check for multiple decimal points
+      if (number.split('.').length > 2) {
+        throw new Error(`Invalid number format: ${number}`);
+      }
+    
       tokens.push({ type: "number", value: number });
       continue;
     }
+    
 
     if (SYMBOLS.includes(char)) {
       tokens.push({ type: "symbol", value: char });
