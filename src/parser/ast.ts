@@ -6,7 +6,8 @@ export type ASTNode =
     | IdentifierNode
     | PrintStatementNode
     | BlockStatementNode
-    | IfStatementNode;
+    | IfStatementNode
+    | WhileStatementNode;
 
     
 export interface AssignmentNode {
@@ -54,4 +55,10 @@ export interface IfStatementNode {
     condition: ASTNode;
     consequence: BlockStatementNode;
     alternate?: BlockStatementNode; // this if for else statement
-  }
+}
+
+export interface WhileStatementNode {
+    type: "WhileStatement";
+    condition: ASTNode;
+    body: BlockStatementNode;
+}

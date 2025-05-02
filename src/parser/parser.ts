@@ -9,6 +9,7 @@ import {
   PrintStatementNode,
   BlockStatementNode,
   IfStatementNode,
+  WhileStatementNode
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -110,6 +111,19 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseStatement(): ASTNode {
     const token = peek();
+
+    if (token?.type === "keyword" && token.value === "while") {
+        consume(); // "while"
+        const condition = parseExpression();
+        const body = parseBlock();
+      
+        return {
+          type: "WhileStatement",
+          condition,
+          body,
+        } as WhileStatementNode;
+      
+    }
 
     if (token?.type === "keyword" && token.value === "if") {
       consume(); // "if"

@@ -98,8 +98,13 @@ import {
         return;
       }
       
+      case "WhileStatement": {
+        while (evalNode(node.condition, ctx)) {
+          evalNode(node.body, ctx);
+        }
+        return;
+      }
       
-  
       default:
         const _unreachable: never = node;
         throw new Error(`Unknown AST node type: ${(node as any).type}`);
