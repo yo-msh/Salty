@@ -13,6 +13,9 @@ import {
   BreakStatementNode,
   ContinueStatementNode,
   LetStatementNode,
+  FunctionDeclarationNode,
+  FunctionCallNode,
+  ReturnStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -79,19 +82,40 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "identifier") {
-      consume();
+      const id = consume().value;
+    
+      // Function call
+      if (peek()?.value === "(") {
+        consume(); // "("
+        const args: ASTNode[] = [];
+        while (peek()?.value !== ")") {
+          args.push(parseExpression());
+          if (peek()?.value === ",") consume();
+        }
+        expect("symbol", ")");
+    
+        return {
+          type: "FunctionCall",
+          name: id,
+          args,
+        } as FunctionCallNode;
+      }
+    
+      // Just a variable
       return {
         type: "Identifier",
-        value: token.value,
+        value: id,
       } as IdentifierNode;
     }
-
+    
     if (token?.type === "symbol" && token.value === "(") {
       consume();
       const expr = parseExpression();
       expect("symbol", ")");
       return expr;
     }
+
+    
 
     throw new Error(`Unexpected token: ${token?.type} ${token?.value}`);
   }
@@ -115,6 +139,44 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parseStatement(): ASTNode {
     const token = peek();
 
+    if (token?.type === "keyword" && token.value === "fn") {
+      consume(); // "fn"
+    
+      const name = expect("identifier").value;
+      expect("symbol", "(");
+    
+      const params: string[] = [];
+      while (peek()?.value !== ")") {
+        const param = expect("identifier").value;
+        params.push(param);
+        if (peek()?.value === ",") consume(); // skip comma
+      }
+    
+      expect("symbol", ")");
+    
+      const body = parseBlock();
+    
+      return {
+        type: "FunctionDeclaration",
+        name,
+        params,
+        body,
+      } as FunctionDeclarationNode;
+    }
+
+    if (token?.type === "keyword" && token.value === "return") {
+      consume(); // "return"
+      const value = parseExpression();
+      expect("symbol", ";");
+    
+      return {
+        type: "ReturnStatement",
+        value,
+      } as ReturnStatementNode;
+    }
+
+    
+    
     if (token?.type === "keyword" && token.value === "let") {
       consume(); // "let"
       const identifier = expect("identifier").value;

@@ -10,7 +10,10 @@ export type ASTNode =
     | WhileStatementNode
     | BreakStatementNode
     | ContinueStatementNode
-    | LetStatementNode;
+    | LetStatementNode
+    | FunctionDeclarationNode
+    | FunctionCallNode
+    | ReturnStatementNode;
 
     
 export interface AssignmentNode {
@@ -77,5 +80,23 @@ export interface ContinueStatementNode {
 export interface LetStatementNode {
   type: "LetStatement";
   identifier: string;
+  value: ASTNode;
+}
+
+export interface FunctionDeclarationNode {
+  type: "FunctionDeclaration";
+  name: string;
+  params: string[];
+  body: BlockStatementNode;
+}
+
+export interface FunctionCallNode {
+  type: "FunctionCall";
+  name: string;
+  args: ASTNode[];
+}
+
+export interface ReturnStatementNode {
+  type: "ReturnStatement";
   value: ASTNode;
 }

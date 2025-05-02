@@ -21,6 +21,16 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
+
+    // Skip comments
+    if (char === "/" && input[cursor + 1] === "/") {
+      // Skip until end of line
+      while (cursor < input.length && input[cursor] !== "\n") {
+        cursor++;
+      }
+      continue;
+    }
+
     // Multi-character symbols
     const twoChar = input.slice(cursor, cursor + 2);
     if (MULTI_CHAR_SYMBOLS.includes(twoChar)) {

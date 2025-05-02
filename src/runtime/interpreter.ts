@@ -12,18 +12,30 @@ import {
   BreakStatementNode,
   ContinueStatementNode,
   LetStatementNode,
+  FunctionDeclarationNode,
+  FunctionCallNode,
+  ReturnStatementNode,
 } from "../parser/ast";
 
 class BreakSignal extends Error {}
 class ContinueSignal extends Error {}
 
-type Environment = Record<string, number>;
+class ReturnSignal {
+  constructor(public value: any) {}
+}
+
+type Environment = Record<string, number>; // this is a map of variable names to their values
 
 type RuntimeContext = {
   env: Environment[]; // stack of variable scopes
+  functions: Record<string, FunctionDeclarationNode>;
+
 };
 
-export function evaluate(ast: ASTNode[], context: RuntimeContext = { env: [ {} ] }) {
+export function evaluate(ast: ASTNode[], context: RuntimeContext = {
+  env: [ {} ],
+  functions: {}
+}) {
   for (const node of ast) {
     evalNode(node, context);
   }
@@ -150,6 +162,46 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
       ctx.env.pop();
       return;
     }
+
+    case "FunctionDeclaration": {
+      const fn = node as FunctionDeclarationNode;
+      ctx.functions[fn.name] = fn;
+      return;
+    }
+    
+    case "ReturnStatement": {
+      const val = evalNode(node.value, ctx);
+      throw new ReturnSignal(val);
+    }
+
+    case "FunctionCall": {
+      const { name, args } = node as FunctionCallNode;
+      const fn = ctx.functions[name];
+      if (!fn) throw new Error(`Undefined function: ${name}`);
+    
+      // Bind parameters
+      const fnEnv: Environment = {};
+      fn.params.forEach((param, index) => {
+        fnEnv[param] = evalNode(args[index], ctx);
+      });
+    
+      // Push new scope
+      ctx.env.push(fnEnv);
+      let result;
+      try {
+        evalNode(fn.body, ctx);
+        result = undefined; // in case there's no return
+      } catch (e) {
+        if (e instanceof ReturnSignal) {
+          result = e.value;
+        } else {
+          throw e;
+        }
+      }
+      ctx.env.pop();
+      return result;
+    }
+        
 
     default:
       const _unreachable: never = node;
