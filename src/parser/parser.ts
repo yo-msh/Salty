@@ -11,6 +11,7 @@ import {
   IfStatementNode,
   WhileStatementNode,
   BreakStatementNode,
+  ContinueStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -112,6 +113,16 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseStatement(): ASTNode {
     const token = peek();
+
+
+    if (token?.type === "keyword" && token.value === "continue") {
+        consume(); // "continue"
+        expect("symbol", ";");
+        return {
+          type: "ContinueStatement",
+        } as ContinueStatementNode;
+      }
+      
 
     if (token?.type === "keyword" && token.value === "break") {
         consume(); // "break"

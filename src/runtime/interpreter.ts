@@ -1,4 +1,5 @@
 class BreakSignal extends Error {}
+class ContinueSignal extends Error {}
 
 import {
     ASTNode,
@@ -105,11 +106,9 @@ import {
           try {
             evalNode(node.body, ctx);
           } catch (e) {
-            if (e instanceof BreakSignal) {
-              break;
-            } else {
-              throw e;
-            }
+            if (e instanceof BreakSignal) break;
+            if (e instanceof ContinueSignal) continue;
+            throw e;
           }
         }
         return;
@@ -117,6 +116,10 @@ import {
       
       case "BreakStatement":
         throw new BreakSignal();
+
+      case "ContinueStatement":
+        throw new ContinueSignal();
+          
 
       default:
         const _unreachable: never = node;
