@@ -4,7 +4,8 @@ export type ASTNode =
     | UnaryExpressionNode
     | NumberLiteralNode
     | IdentifierNode
-    | PrintStatementNode;
+    | PrintStatementNode
+    | BlockStatementNode;
 
     
 export interface AssignmentNode {
@@ -41,3 +42,9 @@ export interface UnaryExpressionNode {
     operator: "-";
     argument: ASTNode;
 }
+
+export interface BlockStatementNode {
+    type: "BlockStatement";
+    body: ASTNode[];
+}
+

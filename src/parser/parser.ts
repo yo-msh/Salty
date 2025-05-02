@@ -5,7 +5,9 @@ import {
   BinaryExpressionNode,
   IdentifierNode,
   NumberLiteralNode,
+  UnaryExpressionNode,
   PrintStatementNode,
+  BlockStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -34,7 +36,7 @@ export function parse(tokens: Token[]): ASTNode[] {
     const next = peek();
     if (next && next.type === "symbol" && ["+", "-", "*", "/"].includes(next.value)) {
       const operator = consume().value;
-      const right = parseExpression(); // right-associative for now
+      const right = parseExpression();
       return {
         type: "BinaryExpression",
         operator,
@@ -48,9 +50,7 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parsePrimary(): ASTNode {
     const token = peek();
-  
 
-    // Unary minus
     if (token.type === "symbol" && token.value === "-") {
       consume();
       const argument = parsePrimary();
@@ -58,41 +58,62 @@ export function parse(tokens: Token[]): ASTNode[] {
         type: "UnaryExpression",
         operator: "-",
         argument,
-      };
+      } as UnaryExpressionNode;
     }
-    
+
     if (token.type === "number") {
       consume();
       return {
         type: "NumberLiteral",
-        value: Number(token.value),
-      };
+        value: parseFloat(token.value),
+      } as NumberLiteralNode;
     }
-  
+
     if (token.type === "identifier") {
       consume();
       return {
         type: "Identifier",
         value: token.value,
-      };
+      } as IdentifierNode;
     }
-  
-    // Handle parentheses
+
     if (token.type === "symbol" && token.value === "(") {
-      consume(); // skip '('
+      consume();
       const expr = parseExpression();
       expect("symbol", ")");
       return expr;
     }
-  
+
     throw new Error(`Unexpected token: ${token.type} ${token.value}`);
   }
-  
+
+  // this is for a block statement
+  // like a function body or a code block in an if statement
+  // it is not a statement itself, but a collection of statements
+  // so yeah lets see how it works
+  function parseBlock(): ASTNode {
+    expect("symbol", "{");
+
+    const body: ASTNode[] = [];
+    while (peek() && peek().value !== "}") {
+      body.push(parseStatement());
+    }
+
+    expect("symbol", "}");
+
+    return {
+      type: "BlockStatement",
+      body,
+    } as BlockStatementNode;
+  }
 
   function parseStatement(): ASTNode {
     const token = peek();
 
-    // print statement
+    if (token.type === "symbol" && token.value === "{") {
+      return parseBlock();
+    }
+
     if (token.type === "keyword" && token.value === "print") {
       consume();
       const expr = parseExpression();
@@ -103,7 +124,6 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as PrintStatementNode;
     }
 
-    // assignment
     if (token.type === "identifier") {
       const identifier = consume().value;
       expect("symbol", "=");
@@ -120,7 +140,6 @@ export function parse(tokens: Token[]): ASTNode[] {
     throw new Error(`Unrecognized statement starting with ${token.type} "${token.value}"`);
   }
 
-  // main loop
   while (current < tokens.length) {
     ast.push(parseStatement());
   }

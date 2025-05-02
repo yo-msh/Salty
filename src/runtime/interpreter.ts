@@ -6,6 +6,7 @@ import {
     NumberLiteralNode,
     PrintStatementNode,
     UnaryExpressionNode,
+    BlockStatementNode,
   } from "../parser/ast";
   
   type RuntimeContext = {
@@ -68,6 +69,14 @@ import {
         const { argument } = node as PrintStatementNode;
         const output = evalNode(argument, ctx);
         console.log(output);
+        return;
+      }
+
+      case "BlockStatement": {
+        const block = node as BlockStatementNode;
+        for (const stmt of block.body) {
+          evalNode(stmt, ctx);
+        }
         return;
       }
   
