@@ -1,4 +1,4 @@
-export const KEYWORDS = ["print", "if", "else", "while", "let", "return", "break", "continue"];
+export const KEYWORDS = ["print", "if", "else", "while", "let", "return", "break", "continue", "let"];
 
 export const SYMBOLS = ["+", "-", "*", "/", "=", ";", "(", ")", "{", "}", ">", "<", "!"];
 

@@ -9,7 +9,8 @@ export type ASTNode =
     | IfStatementNode
     | WhileStatementNode
     | BreakStatementNode
-    | ContinueStatementNode;
+    | ContinueStatementNode
+    | LetStatementNode;
 
     
 export interface AssignmentNode {
@@ -71,4 +72,10 @@ export interface BreakStatementNode {
 
 export interface ContinueStatementNode {
     type: "ContinueStatement";
-  }
+}
+
+export interface LetStatementNode {
+  type: "LetStatement";
+  identifier: string;
+  value: ASTNode;
+}

@@ -12,6 +12,7 @@ import {
   WhileStatementNode,
   BreakStatementNode,
   ContinueStatementNode,
+  LetStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -114,6 +115,20 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parseStatement(): ASTNode {
     const token = peek();
 
+    if (token?.type === "keyword" && token.value === "let") {
+      consume(); // "let"
+      const identifier = expect("identifier").value;
+      expect("symbol", "=");
+      const value = parseExpression();
+      expect("symbol", ";");
+    
+      return {
+        type: "LetStatement",
+        identifier,
+        value,
+      } as LetStatementNode;
+    }
+    
 
     if (token?.type === "keyword" && token.value === "continue") {
         consume(); // "continue"
