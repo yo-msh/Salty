@@ -1,3 +1,5 @@
+class BreakSignal extends Error {}
+
 import {
     ASTNode,
     AssignmentNode,
@@ -100,11 +102,22 @@ import {
       
       case "WhileStatement": {
         while (evalNode(node.condition, ctx)) {
-          evalNode(node.body, ctx);
+          try {
+            evalNode(node.body, ctx);
+          } catch (e) {
+            if (e instanceof BreakSignal) {
+              break;
+            } else {
+              throw e;
+            }
+          }
         }
         return;
       }
       
+      case "BreakStatement":
+        throw new BreakSignal();
+
       default:
         const _unreachable: never = node;
         throw new Error(`Unknown AST node type: ${(node as any).type}`);

@@ -7,7 +7,8 @@ export type ASTNode =
     | PrintStatementNode
     | BlockStatementNode
     | IfStatementNode
-    | WhileStatementNode;
+    | WhileStatementNode
+    | BreakStatementNode;
 
     
 export interface AssignmentNode {
@@ -61,4 +62,8 @@ export interface WhileStatementNode {
     type: "WhileStatement";
     condition: ASTNode;
     body: BlockStatementNode;
+}
+
+export interface BreakStatementNode {
+    type: "BreakStatement"; // for breaking about of loops
 }

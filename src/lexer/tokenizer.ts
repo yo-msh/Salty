@@ -2,7 +2,7 @@
 // It takes a string input and converts it into an array of tokens.
 // Each token has a type and a value.
 
-import { KEYWORDS, SYMBOLS, Token, TokenType } from './constants';
+import { KEYWORDS, SYMBOLS, MULTI_CHAR_SYMBOLS, Token, TokenType } from "./constants";
 
 export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -11,14 +11,32 @@ export function tokenize(input: string): Token[] {
   const isLetter = (ch: string) => /[a-z]/i.test(ch);
   const isDigit = (ch: string) => /[0-9]/.test(ch);
 
+
   while (cursor < input.length) {
     const char = input[cursor];
 
+    // Skip whitespace
     if (/\s/.test(char)) {
       cursor++;
       continue;
     }
 
+    // Multi-character symbols
+    const twoChar = input.slice(cursor, cursor + 2);
+    if (MULTI_CHAR_SYMBOLS.includes(twoChar)) {
+      tokens.push({ type: "symbol", value: twoChar });
+      cursor += 2;
+      continue;
+    }
+
+    // Single-character symbols
+    if (SYMBOLS.includes(char)) {
+      tokens.push({ type: "symbol", value: char });
+      cursor++;
+      continue;
+    }
+
+    // Identifiers / Keywords
     if (isLetter(char)) {
       let word = "";
       while (cursor < input.length && isLetter(input[cursor])) {
@@ -30,25 +48,21 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
+    // Numbers (int or float)
     if (isDigit(char)) {
       let number = "";
-      while (cursor < input.length && (isDigit(input[cursor]) || input[cursor] === '.')) {
+      while (
+        cursor < input.length &&
+        (isDigit(input[cursor]) || input[cursor] === ".")
+      ) {
         number += input[cursor++];
       }
-      
-      // Check for multiple decimal points
-      if (number.split('.').length > 2) {
+
+      if (number.split(".").length > 2) {
         throw new Error(`Invalid number format: ${number}`);
       }
-    
-      tokens.push({ type: "number", value: number });
-      continue;
-    }
-    
 
-    if (SYMBOLS.includes(char)) {
-      tokens.push({ type: "symbol", value: char });
-      cursor++;
+      tokens.push({ type: "number", value: number });
       continue;
     }
 

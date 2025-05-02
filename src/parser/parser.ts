@@ -9,7 +9,8 @@ import {
   PrintStatementNode,
   BlockStatementNode,
   IfStatementNode,
-  WhileStatementNode
+  WhileStatementNode,
+  BreakStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -111,6 +112,14 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseStatement(): ASTNode {
     const token = peek();
+
+    if (token?.type === "keyword" && token.value === "break") {
+        consume(); // "break"
+        expect("symbol", ";");
+        return {
+          type: "BreakStatement",
+        } as BreakStatementNode;
+    }
 
     if (token?.type === "keyword" && token.value === "while") {
         consume(); // "while"
