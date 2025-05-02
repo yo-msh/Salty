@@ -1,6 +1,6 @@
 export const KEYWORDS = ["print", "if", "else", "while", "let", "return"];
 
-export const SYMBOLS = ["+", "-", "*", "/", "=", ";", "(", ")", "{", "}"];
+export const SYMBOLS = ["+", "-", "*", "/", "=", ";", "(", ")", "{", "}", ">", "<", "!", ">=", "<=", "==", "!="];
 
 export type TokenType = "identifier" | "number" | "keyword" | "symbol";
 

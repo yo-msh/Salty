@@ -5,7 +5,8 @@ export type ASTNode =
     | NumberLiteralNode
     | IdentifierNode
     | PrintStatementNode
-    | BlockStatementNode;
+    | BlockStatementNode
+    | IfStatementNode;
 
     
 export interface AssignmentNode {
@@ -16,7 +17,7 @@ export interface AssignmentNode {
 
 export interface BinaryExpressionNode {
   type: "BinaryExpression";
-  operator: "+" | "-" | "*" | "/";  // Add more operators as needed as they are hardcoded in the parser
+  operator: "+" | "-" | "*" | "/" | ">" | "<" | ">=" | "<=" | "==" | "!=";  // Add more operators as needed as they are hardcoded in the parser
   // TODO: Add support for more operators, like `**` for exponentiation
   left: ASTNode;
   right: ASTNode;
@@ -48,3 +49,8 @@ export interface BlockStatementNode {
     body: ASTNode[];
 }
 
+export interface IfStatementNode {
+    type: "IfStatement";
+    condition: ASTNode;
+    consequence: BlockStatementNode;
+  }

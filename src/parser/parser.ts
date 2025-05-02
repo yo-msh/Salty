@@ -8,6 +8,7 @@ import {
   UnaryExpressionNode,
   PrintStatementNode,
   BlockStatementNode,
+  IfStatementNode
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -32,21 +33,26 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseExpression(): ASTNode {
     let left = parsePrimary();
-
-    const next = peek();
-    if (next && next.type === "symbol" && ["+", "-", "*", "/"].includes(next.value)) {
-      const operator = consume().value;
-      const right = parseExpression();
-      return {
-        type: "BinaryExpression",
-        operator,
-        left,
-        right,
-      } as BinaryExpressionNode;
+  
+    while (true) {
+      const next = peek();
+      if (next && next.type === "symbol" && ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<="].includes(next.value)) {
+        const operator = consume().value;
+        const right = parsePrimary();
+        left = {
+          type: "BinaryExpression",
+          operator,
+          left,
+          right,
+        } as BinaryExpressionNode;
+      } else {
+        break;
+      }
     }
-
+  
     return left;
   }
+  
 
   function parsePrimary(): ASTNode {
     const token = peek();
@@ -113,6 +119,18 @@ export function parse(tokens: Token[]): ASTNode[] {
     if (token.type === "symbol" && token.value === "{") {
       return parseBlock();
     }
+
+    if (token.type === "keyword" && token.value === "if") {
+        consume(); // consume "if"
+        const condition = parseExpression();
+        const consequence = parseBlock();
+      
+        return {
+          type: "IfStatement",
+          condition,
+          consequence,
+        } as IfStatementNode;
+      }
 
     if (token.type === "keyword" && token.value === "print") {
       consume();

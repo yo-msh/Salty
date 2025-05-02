@@ -46,17 +46,25 @@ import {
         const { operator, left, right } = node as BinaryExpressionNode;
         const leftVal = evalNode(left, ctx);
         const rightVal = evalNode(right, ctx);
-  
+      
         switch (operator) {
           case "+": return leftVal + rightVal;
           case "-": return leftVal - rightVal;
           case "*": return leftVal * rightVal;
           case "/": return leftVal / rightVal;
+          case ">": return leftVal > rightVal;
+          case "<": return leftVal < rightVal;
+          case "==": return leftVal === rightVal;
+          case "!=": return leftVal !== rightVal;
+          case ">=": return leftVal >= rightVal;
+          case "<=": return leftVal <= rightVal;
+      
           default:
             const _exhaustiveCheck: never = operator;
             throw new Error(`Unknown binary operator: ${_exhaustiveCheck}`);
         }
       }
+      
   
       case "Assignment": {
         const { identifier, value } = node as AssignmentNode;
@@ -79,6 +87,15 @@ import {
         }
         return;
       }
+
+      case "IfStatement": {
+        const conditionValue = evalNode(node.condition, ctx);
+        if (conditionValue) {
+          evalNode(node.consequence, ctx);
+        }
+        return;
+      }
+      
   
       default:
         const _unreachable: never = node;
