@@ -53,4 +53,5 @@ export interface IfStatementNode {
     type: "IfStatement";
     condition: ASTNode;
     consequence: BlockStatementNode;
+    alternate?: BlockStatementNode; // this if for else statement
   }

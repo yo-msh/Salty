@@ -8,22 +8,22 @@ import {
   UnaryExpressionNode,
   PrintStatementNode,
   BlockStatementNode,
-  IfStatementNode
+  IfStatementNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
   let current = 0;
   const ast: ASTNode[] = [];
 
-  function peek() {
+  function peek(): Token | undefined {
     return tokens[current];
   }
 
-  function consume() {
+  function consume(): Token {
     return tokens[current++];
   }
 
-  function expect(type: string, value?: string) {
+  function expect(type: string, value?: string): Token {
     const token = consume();
     if (token.type !== type || (value !== undefined && token.value !== value)) {
       throw new Error(`Expected ${type} "${value}", got ${token.type} "${token.value}"`);
@@ -33,7 +33,7 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseExpression(): ASTNode {
     let left = parsePrimary();
-  
+
     while (true) {
       const next = peek();
       if (next && next.type === "symbol" && ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<="].includes(next.value)) {
@@ -41,23 +41,22 @@ export function parse(tokens: Token[]): ASTNode[] {
         const right = parsePrimary();
         left = {
           type: "BinaryExpression",
-          operator,
+          operator: operator as BinaryExpressionNode["operator"],
           left,
           right,
-        } as BinaryExpressionNode;
+        };
       } else {
         break;
       }
     }
-  
+
     return left;
   }
-  
 
   function parsePrimary(): ASTNode {
     const token = peek();
 
-    if (token.type === "symbol" && token.value === "-") {
+    if (token?.type === "symbol" && token.value === "-") {
       consume();
       const argument = parsePrimary();
       return {
@@ -67,7 +66,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as UnaryExpressionNode;
     }
 
-    if (token.type === "number") {
+    if (token?.type === "number") {
       consume();
       return {
         type: "NumberLiteral",
@@ -75,7 +74,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as NumberLiteralNode;
     }
 
-    if (token.type === "identifier") {
+    if (token?.type === "identifier") {
       consume();
       return {
         type: "Identifier",
@@ -83,25 +82,21 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as IdentifierNode;
     }
 
-    if (token.type === "symbol" && token.value === "(") {
+    if (token?.type === "symbol" && token.value === "(") {
       consume();
       const expr = parseExpression();
       expect("symbol", ")");
       return expr;
     }
 
-    throw new Error(`Unexpected token: ${token.type} ${token.value}`);
+    throw new Error(`Unexpected token: ${token?.type} ${token?.value}`);
   }
 
-  // this is for a block statement
-  // like a function body or a code block in an if statement
-  // it is not a statement itself, but a collection of statements
-  // so yeah lets see how it works
-  function parseBlock(): ASTNode {
+  function parseBlock(): BlockStatementNode {
     expect("symbol", "{");
 
     const body: ASTNode[] = [];
-    while (peek() && peek().value !== "}") {
+    while (peek() && peek()?.value !== "}") {
       body.push(parseStatement());
     }
 
@@ -110,29 +105,37 @@ export function parse(tokens: Token[]): ASTNode[] {
     return {
       type: "BlockStatement",
       body,
-    } as BlockStatementNode;
+    };
   }
 
   function parseStatement(): ASTNode {
     const token = peek();
 
-    if (token.type === "symbol" && token.value === "{") {
+    if (token?.type === "keyword" && token.value === "if") {
+      consume(); // "if"
+      const condition = parseExpression();
+      const consequence = parseBlock();
+
+      let alternate: BlockStatementNode | undefined = undefined;
+      const next = peek();
+      if (next && next.type === "keyword" && next.value === "else") {
+        consume();
+        alternate = parseBlock();
+      }
+
+      return {
+        type: "IfStatement",
+        condition,
+        consequence,
+        alternate,
+      } as IfStatementNode;
+    }
+
+    if (token?.type === "symbol" && token.value === "{") {
       return parseBlock();
     }
 
-    if (token.type === "keyword" && token.value === "if") {
-        consume(); // consume "if"
-        const condition = parseExpression();
-        const consequence = parseBlock();
-      
-        return {
-          type: "IfStatement",
-          condition,
-          consequence,
-        } as IfStatementNode;
-      }
-
-    if (token.type === "keyword" && token.value === "print") {
+    if (token?.type === "keyword" && token.value === "print") {
       consume();
       const expr = parseExpression();
       expect("symbol", ";");
@@ -142,7 +145,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as PrintStatementNode;
     }
 
-    if (token.type === "identifier") {
+    if (token?.type === "identifier") {
       const identifier = consume().value;
       expect("symbol", "=");
       const value = parseExpression();
@@ -155,7 +158,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as AssignmentNode;
     }
 
-    throw new Error(`Unrecognized statement starting with ${token.type} "${token.value}"`);
+    throw new Error(`Unrecognized statement starting with ${token?.type} "${token?.value}"`);
   }
 
   while (current < tokens.length) {

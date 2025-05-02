@@ -92,9 +92,12 @@ import {
         const conditionValue = evalNode(node.condition, ctx);
         if (conditionValue) {
           evalNode(node.consequence, ctx);
+        } else if (node.alternate) {
+          evalNode(node.alternate, ctx);
         }
         return;
       }
+      
       
   
       default:
