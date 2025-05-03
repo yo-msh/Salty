@@ -24,18 +24,30 @@ class ReturnSignal {
   constructor(public value: any) {}
 }
 
-type Environment = Record<string, number>; // this is a map of variable names to their values
+// type Environment = Record<string, number>; // this is a map of variable names to their values
 
-type RuntimeContext = {
-  env: Environment[]; // stack of variable scopes
-  functions: Record<string, FunctionDeclarationNode>;
+type SaltyValue = number | SaltyFunction;
+type Environment = Record<string, SaltyValue>;
 
+//  static type for function declarations
+
+type SaltyFunction = {
+  declaration: FunctionDeclarationNode;
+  closure: Environment[];
 };
 
-export function evaluate(ast: ASTNode[], context: RuntimeContext = {
-  env: [ {} ],
-  functions: {}
-}) {
+type RuntimeContext = {
+  env: Environment[];
+  functions: Record<string, SaltyFunction>;
+};
+
+export function evaluate(
+  ast: ASTNode[],
+  context: RuntimeContext = {
+    env: [{}],
+    functions: {},
+  }
+) {
   for (const node of ast) {
     evalNode(node, context);
   }
@@ -44,7 +56,7 @@ export function evaluate(ast: ASTNode[], context: RuntimeContext = {
 
 // Helpers for scoping
 
-function getVar(name: string, ctx: RuntimeContext): number {
+function getVar(name: string, ctx: RuntimeContext): SaltyValue {
   for (let i = ctx.env.length - 1; i >= 0; i--) {
     if (name in ctx.env[i]) return ctx.env[i][name];
   }
@@ -63,7 +75,8 @@ function setVar(name: string, value: number, ctx: RuntimeContext) {
 
 function declareVar(name: string, value: number, ctx: RuntimeContext) {
   const current = ctx.env[ctx.env.length - 1];
-  if (name in current) throw new Error(`Variable '${name}' already declared in this scope`);
+  if (name in current)
+    throw new Error(`Variable '${name}' already declared in this scope`);
   current[name] = value;
 }
 
@@ -86,16 +99,26 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
       const rightVal = evalNode(right, ctx);
 
       switch (operator) {
-        case "+": return leftVal + rightVal;
-        case "-": return leftVal - rightVal;
-        case "*": return leftVal * rightVal;
-        case "/": return leftVal / rightVal;
-        case ">": return leftVal > rightVal;
-        case "<": return leftVal < rightVal;
-        case "==": return leftVal === rightVal;
-        case "!=": return leftVal !== rightVal;
-        case ">=": return leftVal >= rightVal;
-        case "<=": return leftVal <= rightVal;
+        case "+":
+          return leftVal + rightVal;
+        case "-":
+          return leftVal - rightVal;
+        case "*":
+          return leftVal * rightVal;
+        case "/":
+          return leftVal / rightVal;
+        case ">":
+          return leftVal > rightVal;
+        case "<":
+          return leftVal < rightVal;
+        case "==":
+          return leftVal === rightVal;
+        case "!=":
+          return leftVal !== rightVal;
+        case ">=":
+          return leftVal >= rightVal;
+        case "<=":
+          return leftVal <= rightVal;
         default:
           const _exhaustiveCheck: never = operator;
           throw new Error(`Unknown binary operator: ${_exhaustiveCheck}`);
@@ -165,10 +188,14 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
 
     case "FunctionDeclaration": {
       const fn = node as FunctionDeclarationNode;
-      ctx.functions[fn.name] = fn;
+      // If it's a top-level fn, bind it to its name
+      ctx.env[ctx.env.length - 1][fn.name] = {
+        declaration: fn,
+        closure: [...ctx.env], // deep copy of env stack
+      };
       return;
     }
-    
+
     case "ReturnStatement": {
       const val = evalNode(node.value, ctx);
       throw new ReturnSignal(val);
@@ -176,21 +203,32 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
 
     case "FunctionCall": {
       const { name, args } = node as FunctionCallNode;
-      const fn = ctx.functions[name];
-      if (!fn) throw new Error(`Undefined function: ${name}`);
-    
-      // Bind parameters
+
+      const fnValue = getVar(name, ctx);
+      if (
+        typeof fnValue !== "object" ||
+        !("declaration" in fnValue) ||
+        !("closure" in fnValue)
+      ) {
+        throw new Error(`${name} is not a function`);
+      }
+
+      const { declaration, closure } = fnValue as SaltyFunction;
+
+      // Bind arguments to parameters
       const fnEnv: Environment = {};
-      fn.params.forEach((param, index) => {
-        fnEnv[param] = evalNode(args[index], ctx);
+      declaration.params.forEach((param, i) => {
+        fnEnv[param] = evalNode(args[i], ctx);
       });
-    
-      // Push new scope
+
+      // Push captured env + new local env
+      ctx.env.push(...closure.map((e) => ({ ...e }))); // clone captured env
       ctx.env.push(fnEnv);
+
       let result;
       try {
-        evalNode(fn.body, ctx);
-        result = undefined; // in case there's no return
+        evalNode(declaration.body, ctx);
+        result = undefined;
       } catch (e) {
         if (e instanceof ReturnSignal) {
           result = e.value;
@@ -198,10 +236,10 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
           throw e;
         }
       }
-      ctx.env.pop();
+
+      ctx.env.splice(ctx.env.length - (closure.length + 1), closure.length + 1); // pop all fn envs
       return result;
     }
-        
 
     default:
       const _unreachable: never = node;

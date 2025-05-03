@@ -2,7 +2,13 @@
 // It takes a string input and converts it into an array of tokens.
 // Each token has a type and a value.
 
-import { KEYWORDS, SYMBOLS, MULTI_CHAR_SYMBOLS, Token, TokenType } from "./constants";
+import {
+  KEYWORDS,
+  SYMBOLS,
+  MULTI_CHAR_SYMBOLS,
+  Token,
+  TokenType,
+} from "./constants";
 
 export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -10,7 +16,6 @@ export function tokenize(input: string): Token[] {
 
   const isLetter = (ch: string) => /[a-z]/i.test(ch);
   const isDigit = (ch: string) => /[0-9]/.test(ch);
-
 
   while (cursor < input.length) {
     const char = input[cursor];
@@ -20,7 +25,6 @@ export function tokenize(input: string): Token[] {
       cursor++;
       continue;
     }
-
 
     // Skip comments
     if (char === "/" && input[cursor + 1] === "/") {
@@ -47,16 +51,19 @@ export function tokenize(input: string): Token[] {
     }
 
     // Identifiers / Keywords
-    if (isLetter(char)) {
+    if (isLetter(char) || char === "_") {
       let word = "";
-      while (cursor < input.length && isLetter(input[cursor])) {
+      while (cursor < input.length && /[a-zA-Z0-9_]/.test(input[cursor])) {
         word += input[cursor++];
       }
-
-      const type: TokenType = KEYWORDS.includes(word) ? "keyword" : "identifier";
+    
+      const type: TokenType = KEYWORDS.includes(word)
+        ? "keyword"
+        : "identifier";
       tokens.push({ type, value: word });
       continue;
     }
+    
 
     // Numbers (int or float)
     if (isDigit(char)) {

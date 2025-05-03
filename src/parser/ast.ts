@@ -1,21 +1,20 @@
 export type ASTNode =
-    | AssignmentNode
-    | BinaryExpressionNode
-    | UnaryExpressionNode
-    | NumberLiteralNode
-    | IdentifierNode
-    | PrintStatementNode
-    | BlockStatementNode
-    | IfStatementNode
-    | WhileStatementNode
-    | BreakStatementNode
-    | ContinueStatementNode
-    | LetStatementNode
-    | FunctionDeclarationNode
-    | FunctionCallNode
-    | ReturnStatementNode;
+  | AssignmentNode
+  | BinaryExpressionNode
+  | UnaryExpressionNode
+  | NumberLiteralNode
+  | IdentifierNode
+  | PrintStatementNode
+  | BlockStatementNode
+  | IfStatementNode
+  | WhileStatementNode
+  | BreakStatementNode
+  | ContinueStatementNode
+  | LetStatementNode
+  | FunctionDeclarationNode
+  | FunctionCallNode
+  | ReturnStatementNode;
 
-    
 export interface AssignmentNode {
   type: "Assignment";
   identifier: string;
@@ -24,7 +23,7 @@ export interface AssignmentNode {
 
 export interface BinaryExpressionNode {
   type: "BinaryExpression";
-  operator: "+" | "-" | "*" | "/" | ">" | "<" | ">=" | "<=" | "==" | "!=";  // Add more operators as needed as they are hardcoded in the parser
+  operator: "+" | "-" | "*" | "/" | ">" | "<" | ">=" | "<=" | "==" | "!="; // Add more operators as needed as they are hardcoded in the parser
   // TODO: Add support for more operators, like `**` for exponentiation
   left: ASTNode;
   right: ASTNode;
@@ -46,35 +45,35 @@ export interface PrintStatementNode {
 }
 
 export interface UnaryExpressionNode {
-    type: "UnaryExpression";
-    operator: "-";
-    argument: ASTNode;
+  type: "UnaryExpression";
+  operator: "-";
+  argument: ASTNode;
 }
 
 export interface BlockStatementNode {
-    type: "BlockStatement";
-    body: ASTNode[];
+  type: "BlockStatement";
+  body: ASTNode[];
 }
 
 export interface IfStatementNode {
-    type: "IfStatement";
-    condition: ASTNode;
-    consequence: BlockStatementNode;
-    alternate?: BlockStatementNode; // this if for else statement
+  type: "IfStatement";
+  condition: ASTNode;
+  consequence: BlockStatementNode;
+  alternate?: BlockStatementNode; // this if for else statement
 }
 
 export interface WhileStatementNode {
-    type: "WhileStatement";
-    condition: ASTNode;
-    body: BlockStatementNode;
+  type: "WhileStatement";
+  condition: ASTNode;
+  body: BlockStatementNode;
 }
 
 export interface BreakStatementNode {
-    type: "BreakStatement"; // for breaking about of loops
+  type: "BreakStatement"; // for breaking about of loops
 }
 
 export interface ContinueStatementNode {
-    type: "ContinueStatement";
+  type: "ContinueStatement";
 }
 
 export interface LetStatementNode {

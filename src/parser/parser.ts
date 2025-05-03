@@ -33,7 +33,9 @@ export function parse(tokens: Token[]): ASTNode[] {
   function expect(type: string, value?: string): Token {
     const token = consume();
     if (token.type !== type || (value !== undefined && token.value !== value)) {
-      throw new Error(`Expected ${type} "${value}", got ${token.type} "${token.value}"`);
+      throw new Error(
+        `Expected ${type} "${value}", got ${token.type} "${token.value}"`
+      );
     }
     return token;
   }
@@ -43,7 +45,13 @@ export function parse(tokens: Token[]): ASTNode[] {
 
     while (true) {
       const next = peek();
-      if (next && next.type === "symbol" && ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<="].includes(next.value)) {
+      if (
+        next &&
+        next.type === "symbol" &&
+        ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<="].includes(
+          next.value
+        )
+      ) {
         const operator = consume().value;
         const right = parsePrimary();
         left = {
@@ -83,7 +91,7 @@ export function parse(tokens: Token[]): ASTNode[] {
 
     if (token?.type === "identifier") {
       const id = consume().value;
-    
+
       // Function call
       if (peek()?.value === "(") {
         consume(); // "("
@@ -93,29 +101,27 @@ export function parse(tokens: Token[]): ASTNode[] {
           if (peek()?.value === ",") consume();
         }
         expect("symbol", ")");
-    
+
         return {
           type: "FunctionCall",
           name: id,
           args,
         } as FunctionCallNode;
       }
-    
+
       // Just a variable
       return {
         type: "Identifier",
         value: id,
       } as IdentifierNode;
     }
-    
+
     if (token?.type === "symbol" && token.value === "(") {
       consume();
       const expr = parseExpression();
       expect("symbol", ")");
       return expr;
     }
-
-    
 
     throw new Error(`Unexpected token: ${token?.type} ${token?.value}`);
   }
@@ -141,21 +147,21 @@ export function parse(tokens: Token[]): ASTNode[] {
 
     if (token?.type === "keyword" && token.value === "fn") {
       consume(); // "fn"
-    
+
       const name = expect("identifier").value;
       expect("symbol", "(");
-    
+
       const params: string[] = [];
       while (peek()?.value !== ")") {
         const param = expect("identifier").value;
         params.push(param);
         if (peek()?.value === ",") consume(); // skip comma
       }
-    
+
       expect("symbol", ")");
-    
+
       const body = parseBlock();
-    
+
       return {
         type: "FunctionDeclaration",
         name,
@@ -168,58 +174,53 @@ export function parse(tokens: Token[]): ASTNode[] {
       consume(); // "return"
       const value = parseExpression();
       expect("symbol", ";");
-    
+
       return {
         type: "ReturnStatement",
         value,
       } as ReturnStatementNode;
     }
 
-    
-    
     if (token?.type === "keyword" && token.value === "let") {
       consume(); // "let"
       const identifier = expect("identifier").value;
       expect("symbol", "=");
       const value = parseExpression();
       expect("symbol", ";");
-    
+
       return {
         type: "LetStatement",
         identifier,
         value,
       } as LetStatementNode;
     }
-    
 
     if (token?.type === "keyword" && token.value === "continue") {
-        consume(); // "continue"
-        expect("symbol", ";");
-        return {
-          type: "ContinueStatement",
-        } as ContinueStatementNode;
-      }
-      
+      consume(); // "continue"
+      expect("symbol", ";");
+      return {
+        type: "ContinueStatement",
+      } as ContinueStatementNode;
+    }
 
     if (token?.type === "keyword" && token.value === "break") {
-        consume(); // "break"
-        expect("symbol", ";");
-        return {
-          type: "BreakStatement",
-        } as BreakStatementNode;
+      consume(); // "break"
+      expect("symbol", ";");
+      return {
+        type: "BreakStatement",
+      } as BreakStatementNode;
     }
 
     if (token?.type === "keyword" && token.value === "while") {
-        consume(); // "while"
-        const condition = parseExpression();
-        const body = parseBlock();
-      
-        return {
-          type: "WhileStatement",
-          condition,
-          body,
-        } as WhileStatementNode;
-      
+      consume(); // "while"
+      const condition = parseExpression();
+      const body = parseBlock();
+
+      return {
+        type: "WhileStatement",
+        condition,
+        body,
+      } as WhileStatementNode;
     }
 
     if (token?.type === "keyword" && token.value === "if") {
@@ -269,7 +270,9 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as AssignmentNode;
     }
 
-    throw new Error(`Unrecognized statement starting with ${token?.type} "${token?.value}"`);
+    throw new Error(
+      `Unrecognized statement starting with ${token?.type} "${token?.value}"`
+    );
   }
 
   while (current < tokens.length) {
