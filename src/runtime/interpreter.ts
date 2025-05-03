@@ -15,6 +15,7 @@ import {
   FunctionDeclarationNode,
   FunctionCallNode,
   ReturnStatementNode,
+  FunctionExpressionNode,
 } from "../parser/ast";
 
 class BreakSignal extends Error {}
@@ -240,6 +241,20 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
       ctx.env.splice(ctx.env.length - (closure.length + 1), closure.length + 1); // pop all fn envs
       return result;
     }
+
+    case "FunctionExpression": {
+      const fn = node as FunctionExpressionNode;
+      return {
+        declaration: {
+          type: "FunctionDeclaration",
+          name: "", // no name
+          params: fn.params,
+          body: fn.body,
+        },
+        closure: [...ctx.env], // capture the current env
+      } as SaltyFunction;
+    }
+    
 
     default:
       const _unreachable: never = node;

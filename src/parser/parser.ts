@@ -16,6 +16,7 @@ import {
   FunctionDeclarationNode,
   FunctionCallNode,
   ReturnStatementNode,
+  FunctionExpressionNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -71,6 +72,29 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parsePrimary(): ASTNode {
     const token = peek();
 
+    // Anonymous function (FunctionExpression)
+    if (token?.type === "keyword" && token.value === "fn") {
+      consume(); // "fn"
+      expect("symbol", "(");
+
+      const params: string[] = [];
+      while (peek()?.value !== ")") {
+        const param = expect("identifier").value;
+        params.push(param);
+        if (peek()?.value === ",") consume();
+      }
+
+      expect("symbol", ")");
+      const body = parseBlock();
+
+      return {
+        type: "FunctionExpression",
+        params,
+        body,
+      } as FunctionExpressionNode;
+    }
+
+    // Unary minus
     if (token?.type === "symbol" && token.value === "-") {
       consume();
       const argument = parsePrimary();
@@ -81,6 +105,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as UnaryExpressionNode;
     }
 
+    // Numbers
     if (token?.type === "number") {
       consume();
       return {
@@ -89,15 +114,23 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as NumberLiteralNode;
     }
 
+    // Parenthesized expression
+    if (token?.type === "symbol" && token.value === "(") {
+      consume();
+      const expr = parseExpression();
+      expect("symbol", ")");
+      return expr;
+    }
+
+    // Identifiers and function calls
     if (token?.type === "identifier") {
       const id = consume().value;
 
-      // Function call
       if (peek()?.value === "(") {
         consume(); // "("
         const args: ASTNode[] = [];
         while (peek()?.value !== ")") {
-          args.push(parseExpression());
+          args.push(parseExpression()); // <-- allows nested expressions like fn(n){...}
           if (peek()?.value === ",") consume();
         }
         expect("symbol", ")");
@@ -109,18 +142,10 @@ export function parse(tokens: Token[]): ASTNode[] {
         } as FunctionCallNode;
       }
 
-      // Just a variable
       return {
         type: "Identifier",
         value: id,
       } as IdentifierNode;
-    }
-
-    if (token?.type === "symbol" && token.value === "(") {
-      consume();
-      const expr = parseExpression();
-      expect("symbol", ")");
-      return expr;
     }
 
     throw new Error(`Unexpected token: ${token?.type} ${token?.value}`);

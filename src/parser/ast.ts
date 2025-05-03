@@ -13,7 +13,8 @@ export type ASTNode =
   | LetStatementNode
   | FunctionDeclarationNode
   | FunctionCallNode
-  | ReturnStatementNode;
+  | ReturnStatementNode
+  | FunctionExpressionNode;
 
 export interface AssignmentNode {
   type: "Assignment";
@@ -98,4 +99,10 @@ export interface FunctionCallNode {
 export interface ReturnStatementNode {
   type: "ReturnStatement";
   value: ASTNode;
+}
+
+export interface FunctionExpressionNode {
+  type: "FunctionExpression";
+  params: string[];
+  body: BlockStatementNode;
 }
