@@ -10,6 +10,8 @@ export const KEYWORDS = [
   "let",
   "fn",
   "return",
+  "true",
+  "false",
 ];
 
 export const SYMBOLS = [
@@ -27,9 +29,12 @@ export const SYMBOLS = [
   "<",
   "!",
   ",",
+  "[",
+  "]",
+  ".",
 ];
 
-export const MULTI_CHAR_SYMBOLS = ["==", "!=", ">=", "<="];
+export const MULTI_CHAR_SYMBOLS = ["==", "!=", ">=", "<=", "&&", "||"];
 
 export type TokenType = "identifier" | "number" | "keyword" | "symbol";
 

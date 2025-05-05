@@ -17,6 +17,9 @@ import {
   FunctionCallNode,
   ReturnStatementNode,
   FunctionExpressionNode,
+  ArrayLiteralNode,
+  IndexAccessNode,
+  BooleanLiteralNode,
 } from "./ast";
 
 export function parse(tokens: Token[]): ASTNode[] {
@@ -49,7 +52,7 @@ export function parse(tokens: Token[]): ASTNode[] {
       if (
         next &&
         next.type === "symbol" &&
-        ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<="].includes(
+        ["+", "-", "*", "/", ">", "<", "==", "!=", ">=", "<=","&&", "||"].includes(
           next.value
         )
       ) {
@@ -72,9 +75,18 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parsePrimary(): ASTNode {
     const token = peek();
 
-    // Anonymous function (FunctionExpression)
+    if (token?.type === "keyword" && token.value === "true") {
+      consume();
+      return { type: "BooleanLiteral", value: true };
+    }
+
+    if (token?.type === "keyword" && token.value === "false") {
+      consume();
+      return { type: "BooleanLiteral", value: false };
+    }
+
     if (token?.type === "keyword" && token.value === "fn") {
-      consume(); // "fn"
+      consume();
       expect("symbol", "(");
 
       const params: string[] = [];
@@ -94,7 +106,6 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as FunctionExpressionNode;
     }
 
-    // Unary minus
     if (token?.type === "symbol" && token.value === "-") {
       consume();
       const argument = parsePrimary();
@@ -105,7 +116,6 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as UnaryExpressionNode;
     }
 
-    // Numbers
     if (token?.type === "number") {
       consume();
       return {
@@ -114,7 +124,6 @@ export function parse(tokens: Token[]): ASTNode[] {
       } as NumberLiteralNode;
     }
 
-    // Parenthesized expression
     if (token?.type === "symbol" && token.value === "(") {
       consume();
       const expr = parseExpression();
@@ -122,24 +131,47 @@ export function parse(tokens: Token[]): ASTNode[] {
       return expr;
     }
 
-    // Identifiers and function calls
+    if (token?.type === "symbol" && token.value === "[") {
+      consume();
+      const elements: ASTNode[] = [];
+      while (peek()?.value !== "]") {
+        elements.push(parseExpression());
+        if (peek()?.value === ",") consume();
+      }
+      expect("symbol", "]");
+      return {
+        type: "ArrayLiteral",
+        elements,
+      } as ArrayLiteralNode;
+    }
+
     if (token?.type === "identifier") {
       const id = consume().value;
 
       if (peek()?.value === "(") {
-        consume(); // "("
+        consume();
         const args: ASTNode[] = [];
         while (peek()?.value !== ")") {
-          args.push(parseExpression()); // <-- allows nested expressions like fn(n){...}
+          args.push(parseExpression());
           if (peek()?.value === ",") consume();
         }
         expect("symbol", ")");
-
         return {
           type: "FunctionCall",
           name: id,
           args,
         } as FunctionCallNode;
+      }
+
+      if (peek()?.value === "[") {
+        consume();
+        const index = parseExpression();
+        expect("symbol", "]");
+        return {
+          type: "IndexAccess",
+          array: { type: "Identifier", value: id } as IdentifierNode,
+          index,
+        } as IndexAccessNode;
       }
 
       return {
@@ -153,14 +185,11 @@ export function parse(tokens: Token[]): ASTNode[] {
 
   function parseBlock(): BlockStatementNode {
     expect("symbol", "{");
-
     const body: ASTNode[] = [];
     while (peek() && peek()?.value !== "}") {
       body.push(parseStatement());
     }
-
     expect("symbol", "}");
-
     return {
       type: "BlockStatement",
       body,
@@ -171,22 +200,17 @@ export function parse(tokens: Token[]): ASTNode[] {
     const token = peek();
 
     if (token?.type === "keyword" && token.value === "fn") {
-      consume(); // "fn"
-
+      consume();
       const name = expect("identifier").value;
       expect("symbol", "(");
-
       const params: string[] = [];
       while (peek()?.value !== ")") {
         const param = expect("identifier").value;
         params.push(param);
-        if (peek()?.value === ",") consume(); // skip comma
+        if (peek()?.value === ",") consume();
       }
-
       expect("symbol", ")");
-
       const body = parseBlock();
-
       return {
         type: "FunctionDeclaration",
         name,
@@ -196,10 +220,9 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "keyword" && token.value === "return") {
-      consume(); // "return"
+      consume();
       const value = parseExpression();
       expect("symbol", ";");
-
       return {
         type: "ReturnStatement",
         value,
@@ -207,12 +230,11 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "keyword" && token.value === "let") {
-      consume(); // "let"
+      consume();
       const identifier = expect("identifier").value;
       expect("symbol", "=");
       const value = parseExpression();
       expect("symbol", ";");
-
       return {
         type: "LetStatement",
         identifier,
@@ -221,26 +243,21 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "keyword" && token.value === "continue") {
-      consume(); // "continue"
+      consume();
       expect("symbol", ";");
-      return {
-        type: "ContinueStatement",
-      } as ContinueStatementNode;
+      return { type: "ContinueStatement" } as ContinueStatementNode;
     }
 
     if (token?.type === "keyword" && token.value === "break") {
-      consume(); // "break"
+      consume();
       expect("symbol", ";");
-      return {
-        type: "BreakStatement",
-      } as BreakStatementNode;
+      return { type: "BreakStatement" } as BreakStatementNode;
     }
 
     if (token?.type === "keyword" && token.value === "while") {
-      consume(); // "while"
+      consume();
       const condition = parseExpression();
       const body = parseBlock();
-
       return {
         type: "WhileStatement",
         condition,
@@ -249,17 +266,14 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "keyword" && token.value === "if") {
-      consume(); // "if"
+      consume();
       const condition = parseExpression();
       const consequence = parseBlock();
-
       let alternate: BlockStatementNode | undefined = undefined;
-      const next = peek();
-      if (next && next.type === "keyword" && next.value === "else") {
+      if (peek()?.type === "keyword" && peek()?.value === "else") {
         consume();
         alternate = parseBlock();
       }
-
       return {
         type: "IfStatement",
         condition,
@@ -283,11 +297,17 @@ export function parse(tokens: Token[]): ASTNode[] {
     }
 
     if (token?.type === "identifier") {
-      const identifier = consume().value;
+      const id = consume().value;
+      let identifier: string = id;
+      if (peek()?.value === "[") {
+        consume();
+        const indexExpr = parseExpression();
+        expect("symbol", "]");
+        identifier = `${id}[${(indexExpr as NumberLiteralNode).value}]`;
+      }
       expect("symbol", "=");
       const value = parseExpression();
       expect("symbol", ";");
-
       return {
         type: "Assignment",
         identifier,

@@ -16,7 +16,12 @@ import {
   FunctionCallNode,
   ReturnStatementNode,
   FunctionExpressionNode,
+  ArrayLiteralNode,
+  IndexAccessNode,
+  BooleanLiteralNode,
 } from "../parser/ast";
+
+import { lookup, assign, declare } from "./env_utils";
 
 class BreakSignal extends Error {}
 class ContinueSignal extends Error {}
@@ -120,18 +125,36 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
           return leftVal >= rightVal;
         case "<=":
           return leftVal <= rightVal;
+        case "&&":
+          return leftVal && rightVal;
+        case "||":
+          return leftVal || rightVal;          
         default:
           const _exhaustiveCheck: never = operator;
           throw new Error(`Unknown binary operator: ${_exhaustiveCheck}`);
       }
     }
 
-    case "Assignment": {
-      const { identifier, value } = node as AssignmentNode;
-      const val = evalNode(value, ctx);
-      setVar(identifier, val, ctx);
-      return;
-    }
+    // case "Assignment": {
+    //   const { identifier, value } = node as AssignmentNode;
+    //   const val = evalNode(value, ctx);
+
+    //   if (identifier.includes("[")) {
+    //     const match = identifier.match(/^([a-zA-Z_]\w*)\[(\d+)\]$/);
+    //     if (!match)
+    //       throw new Error(`Invalid indexed assignment: ${identifier}`);
+
+    //     const arrName = match[1];
+    //     const index = parseInt(match[2], 10);
+    //     const arr = getVar(arrName, ctx);
+    //     if (!Array.isArray(arr)) throw new Error(`${arrName} is not an array`);
+    //     arr[index] = val;
+    //     return;
+    //   }
+
+    //   setVar(identifier, val, ctx);
+    //   return;
+    // }
 
     case "LetStatement": {
       const { identifier, value } = node as LetStatementNode;
@@ -254,7 +277,50 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
         closure: [...ctx.env], // capture the current env
       } as SaltyFunction;
     }
-    
+
+    case "ArrayLiteral": {
+      const values = node.elements.map((element) => evalNode(element, ctx));
+      return values;
+    }
+
+    case "IndexAccess": {
+      const arr = evalNode(node.array, ctx);
+      const idx = evalNode(node.index, ctx);
+
+      if (!Array.isArray(arr)) {
+        throw new Error("Trying to index a non-array value.");
+      }
+      if (typeof idx !== "number") {
+        throw new Error("Array index must be a number.");
+      }
+
+      return arr[idx];
+    }
+
+    case "Assignment": {
+      const value = evalNode(node.value, ctx);
+
+      // Handle a[b] = 42
+      if (node.identifier.includes("[")) {
+        const match = node.identifier.match(/^([a-zA-Z_]\w*)\[(\d+)\]$/);
+        if (!match)
+          throw new Error(`Invalid indexed assignment: ${node.identifier}`);
+
+        const arrName = match[1];
+        const index = parseInt(match[2], 10);
+        const arr = lookup(arrName, ctx.env);
+        if (!Array.isArray(arr)) throw new Error(`${arrName} is not an array`);
+        arr[index] = value;
+        return value;
+      }
+
+      assign(node.identifier, value, ctx.env);
+      return value;
+    }
+
+    case "BooleanLiteral":
+      return (node as BooleanLiteralNode).value;
+
 
     default:
       const _unreachable: never = node;
