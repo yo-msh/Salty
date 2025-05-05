@@ -16,6 +16,11 @@ It's built from scratch with its own lexer, parser, and runtime — designed to 
 - [x] Control statements (`break`, `continue`)
 - [x] Blocks (`{ ... }`)
 - [x] Print output
+- [x] Boolean expressions (`true`, `false`, `!`, `&&`, `||`)
+- [x] Comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`)
+- [x] Array literals and indexing (`[1, 2, 3]`, `arr[0] = 99`)
+- [x] Variable declarations (`let`)
+- [x] Functions (declaration, call, return)
 
 ---
 
@@ -38,7 +43,12 @@ while x < 5 {
 - **Numbers:** 42, 3.14
 - **Symbols:** =, +, -, \*, /, {, }, (, ), ;
 - **Operators:** ==, !=, <, >, <=, >=
-- **Keywords:** if, else, while, print, break, continue
+- **Keywords:** print, if, else, while, return, break, continue, let, fn, return, true, false
+- **Loops:** while, break, continue
+- **Booleans:** true, false
+- **Logical Operators:** &&, ||, !
+- **Array Symbols:** [, ]
+- **Function Keyword:** fn, return
 
 ## How to Run
 
@@ -60,7 +70,6 @@ node dist/index.js
 
 # Start interactive REPL
 npm run repl
-
 ```
 
 ## Project Structure
@@ -95,4 +104,19 @@ while x > 0 {
     break;
   }
 }
+```
+
+```salty
+let nums = [1, 2, 3];
+print nums[1];      // 2
+nums[1] = 99;
+print nums;         // [1, 99, 3]
+
+print true && false;
+print !false;
+
+fn square(x) {
+  return x * x;
+}
+print square(5);    // 25
 ```

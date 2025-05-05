@@ -3,7 +3,6 @@ export const KEYWORDS = [
   "if",
   "else",
   "while",
-  "let",
   "return",
   "break",
   "continue",
