@@ -75,6 +75,16 @@ export function parse(tokens: Token[]): ASTNode[] {
   function parsePrimary(): ASTNode {
     const token = peek();
 
+    if (token?.type === "symbol" && (token.value === "-" || token.value === "!")) {
+      const operator = consume().value;
+      const argument = parsePrimary();
+      return {
+        type: "UnaryExpression",
+        operator: operator as UnaryExpressionNode["operator"],
+        argument,
+      };
+    }
+    
     if (token?.type === "keyword" && token.value === "true") {
       consume();
       return { type: "BooleanLiteral", value: true };

@@ -48,9 +48,11 @@ export interface PrintStatementNode {
   argument: ASTNode;
 }
 
+// hardedcoded in the parser, may add more later, being used negation and logical not
+// TODO: ++ and -- operators
 export interface UnaryExpressionNode {
   type: "UnaryExpression";
-  operator: "-";
+  operator: "-" | "!"; 
   argument: ASTNode;
 }
 

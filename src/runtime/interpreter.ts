@@ -96,8 +96,18 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
     case "Identifier":
       return getVar((node as IdentifierNode).value, ctx);
 
-    case "UnaryExpression":
-      return -evalNode(node.argument, ctx);
+    case "UnaryExpression": {
+      const { operator, argument } = node as UnaryExpressionNode;
+      const value = evalNode(argument, ctx);
+      switch (operator) {
+        case "-":
+          return -value;
+        case "!":
+          return !value;
+        default:
+          throw new Error(`Unknown unary operator: ${operator}`);
+      }
+    }
 
     case "BinaryExpression": {
       const { operator, left, right } = node as BinaryExpressionNode;
@@ -128,7 +138,7 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
         case "&&":
           return leftVal && rightVal;
         case "||":
-          return leftVal || rightVal;          
+          return leftVal || rightVal;
         default:
           const _exhaustiveCheck: never = operator;
           throw new Error(`Unknown binary operator: ${_exhaustiveCheck}`);
@@ -320,7 +330,6 @@ function evalNode(node: ASTNode, ctx: RuntimeContext): any {
 
     case "BooleanLiteral":
       return (node as BooleanLiteralNode).value;
-
 
     default:
       const _unreachable: never = node;

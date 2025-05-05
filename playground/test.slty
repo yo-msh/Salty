@@ -1,2 +1,4 @@
-print true && false;
-print true || false;
+print !true;      // false
+print !false;     // true
+let x = false;
+print !x;         // true
